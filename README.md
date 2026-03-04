@@ -12,7 +12,7 @@ A full-stack web application for searching and visualizing protein structures fr
 ## Tech Stack
 
 ### Frontend
-- React (Vite)
+- Javascript (React, Vite)
 - 3Dmol.js for 3D structure rendering
 
 ### Backend
