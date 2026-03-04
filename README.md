@@ -27,7 +27,7 @@ A full-stack web application for searching and visualizing protein structures fr
 
 ## To Run
 
-#### Backend
+### Backend
 
 From the project root:
 ```
@@ -35,7 +35,7 @@ From the project root:
 ```
 the backend will start on http://localhost:8080
 
-#### Frontend 
+### Frontend 
 From the client directory:
 ```
 npm install
@@ -43,7 +43,14 @@ npm run dev
 ```
 The frontend will start on http://localhost:5173
 
-#### Usage
+### Usage
 1. Enter a PDB ID in the search box (e.g. 4HHB, 1BNA, 3PTB)
 2. Click Search
 3. View the protein metadata and interact with the 3D structure
+
+### API
+The backend exposes a single endpoint:
+```
+GET /api/protein/{pdbId}
+```
+Returns metadata for the given PDB ID from the RCSB REST API.
