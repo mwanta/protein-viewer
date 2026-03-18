@@ -1,0 +1,17 @@
+# Multi-stage build pattern
+
+# Stage 1: build the app
+FROM eclipse-temurin:21-jdk AS build
+WORKDIR /app
+COPY .mvn .mvn
+COPY mvnw pom.xml ./
+RUN ./mvnw dependency:go-offline
+COPY src ./src
+RUN ./mvnw package -DskipTests
+
+# Stage 2: copy the output into a minimal runtime image
+FROM eclipse-temurin:21-jre
+WORKDIR /app
+COPY --from=build /app/target/*.jar app.jar
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "app.jar"]

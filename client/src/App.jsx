@@ -11,7 +11,7 @@ function App() {
   const search = async () => {
     try {
       setError(null)
-      const res = await fetch(`http://localhost:8080/api/protein/${pdbId}`)
+      const res = await fetch(`/api/protein/${pdbId}`)
       if (!res.ok) throw new Error("Protein not found")
       const data = await res.json()
       setProtein(data)
