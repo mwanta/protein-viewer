@@ -81,6 +81,20 @@ resource "aws_ecs_task_definition" "main" {
       memory    = 384
       cpu       = 256
       essential = true
+      environment = [
+        {
+          name  = "SPRING_DATASOURCE_URL"
+          value = "jdbc:postgresql://${aws_db_instance.main.endpoint}/proteinviewer"
+        },
+        {
+          name  = "SPRING_DATASOURCE_USERNAME"
+          value = "postgres"
+        },
+        {
+          name  = "SPRING_DATASOURCE_PASSWORD"
+          value = "postgres"
+        }
+      ]
       portMappings = [{
         containerPort = 8080
         hostPort      = 8080
@@ -100,6 +114,10 @@ resource "aws_ecs_task_definition" "main" {
       memory    = 128
       cpu       = 128
       essential = true
+      environment = [{
+        name  = "BACKEND_HOST"
+        value = "localhost"
+      }]
       portMappings = [{
         containerPort = 80
         hostPort      = 80
