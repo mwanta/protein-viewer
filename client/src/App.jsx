@@ -4,6 +4,12 @@ import * as $3Dmol from "3dmol"
 import './App.css'
 
 function App() {
+  const [token, setToken] = useState(null)
+  const [authMode, setAuthMode] = useState("login")
+  const [authUsername, setAuthUsername] = useState("")
+  const [authPassword, setAuthPassword] = useState("")
+  const [authError, setAuthError] = useState(null)
+
   const [pdbId, setPdbId] = useState("")
   const [protein, setProtein] = useState(null)
   const [error, setError] = useState(null)
@@ -11,8 +17,8 @@ function App() {
   const viewerRef = useRef(null)
 
   useEffect(() => {
-      fetchFavorites()
-  },   [])
+      if (token) fetchFavorites()
+  }, [token])
 
   useEffect(() => {
     if (!protein || !viewerRef.current) return
@@ -28,9 +34,44 @@ function App() {
     })
   }, [protein])
 
+  const authFetch = (url, options = {}) => {
+    return fetch(url, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+        ...options.headers
+      }
+    })
+  }
+
+  const handleAuth = async () => {
+    try {
+      setAuthError(null)
+      const res = await fetch(`/api/auth/${authMode}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: authUsername, password: authPassword })
+      })
+      if (!res.ok) {
+        const msg = await res.text()
+        throw new Error(msg || "Authentication failed")
+      }
+      if (authMode === "login") {
+        const data = await res.json()
+        setToken(data.token)
+      } else {
+        setAuthMode("login")
+        setAuthError("Registration successful, please log in")
+      }
+    } catch (err) {
+      setAuthError(err.message)
+    }
+  }
+
   const fetchFavorites = async () => {
     try {
-      const res = await fetch("/api/favorites")
+      const res = await authFetch("/api/favorites")
       if (!res.ok) throw new Error("Failed to fetch favorites")
       const data = await res.json()
       setFavorites(data)
@@ -42,7 +83,7 @@ function App() {
   const search = async () => {
     try {
       setError(null)
-      const res = await fetch(`/api/protein/${pdbId}`)
+      const res = await authFetch(`/api/protein/${pdbId}`)
       if (!res.ok) throw new Error("Protein not found")
       const data = await res.json()
       setProtein(data)
@@ -53,18 +94,18 @@ function App() {
   }
 
   const addFavorite = async () => {
-    await fetch(`/api/favorites/${protein.entry?.id}`, { method: "POST" })
+    await authFetch(`/api/favorites/${protein.entry?.id}`, { method: "POST" })
     fetchFavorites()
   }
 
   const removeFavorite = async (pdbId) => {
-    await fetch(`/api/favorites/${pdbId}`, { method: "DELETE" })
+    await authFetch(`/api/favorites/${pdbId}`, { method: "DELETE" })
     fetchFavorites()
   }
 
   const loadFavorite = (pdbId) => {
     setPdbId(pdbId)
-    fetch(`/api/protein/${pdbId}`)
+    authFetch(`/api/protein/${pdbId}`)
       .then(res => res.json())
       .then(data => setProtein(data))
       .catch(err => setError("Failed to load favorite"))
@@ -72,9 +113,39 @@ function App() {
 
   const isFavorite = protein && favorites.some(fav => fav.protein.pdbId === protein.entry?.id)
 
+  if (!token) {
+    return (
+      <div>
+        <h1>Protein Structure Viewer</h1>
+        <h2>{authMode === "login" ? "Login" : "Register"}</h2>
+        <input
+          value={authUsername}
+          onChange={e => setAuthUsername(e.target.value)}
+          onKeyDown={e => e.key === "Enter" && handleAuth()}
+          placeholder="Username"
+        />
+        <input
+          type="password"
+          value={authPassword}
+          onChange={e => setAuthPassword(e.target.value)}
+          onKeyDown={e => e.key === "Enter" && handleAuth()}
+          placeholder="Password"
+        />
+        <button onClick={handleAuth}>
+          {authMode === "login" ? "Login" : "Register"}
+        </button>
+        <button onClick={() => setAuthMode(authMode === "login" ? "register" : "login")}>
+          {authMode === "login" ? "Need an account? Register" : "Have an account? Login"}
+        </button>
+        {authError && <p style={{ color: "red" }}>{authError}</p>}
+      </div>
+    )
+  }
+
   return (
     <div>
       <h1>Protein Structure Viewer</h1>
+      <button onClick={() => { setToken(null), setProtein(null), setFavorites([]) }}>Logout</button>
 
       <input
         value={pdbId}

@@ -5,11 +5,12 @@
 A full-stack web application for searching and visualizing protein structures from the RCSB Protein Data Bank.
 
 ## Features
+- Register and log in with a username and password
 - Search proteins by PDB ID
 - Display protein metadata including name, experimental method, and resolution
 - Interactive 3D structure visualization rendered in the browser
 - Cache protein metadata in a PostgreSQL database to reduce redundant API calls
-- Save and manage favorite proteins that persist across sessions. 
+- Save and manage favorite proteins that persist across sessions tied to individual user accounts. 
 
 ## Tech Stack
 
@@ -21,11 +22,13 @@ A full-stack web application for searching and visualizing protein structures fr
 - Java 21
 - Spring Boot
 - Spring Data JPA / Hibernate
+- Spring Security
+- JWT for stateless authentication
 - RCSB PDB REST API
 
 ### Database
 - PostgreSQL
-- Two tables: proteins (metadata cache) and favorites (user saved proteins)
+- Three tables: users, proteins (metadata cache), and favorites (user saved proteins)
 
 ### Infrastructure & DevOps
 - Docker & Docker Compose
@@ -91,18 +94,22 @@ The workflow can also be triggered manually from the Actions tab in GitHub witho
 
 
 ## Usage
-1. Enter a PDB ID in the search box (e.g. 4HHB, 1BNA, 3PTB)
-2. Click Search or press Enter
-3. View the protein metadata and interact with the 3D structure
-4. Click Add to Favorites to save the protein for later
-5. Use the Favorites list (at the bottom of the screen) to reload or remove saved proteins
+1. Register a new account or log in with existing credentials
+2. Enter a PDB ID in the search box (e.g. 4HHB, 1BNA, 3PTB)
+3. Click Search or press Enter
+4. View the protein metadata and interact with the 3D structure
+5. Click Add to Favorites to save the protein for later
+6. Use the Favorites list (at the bottom of the screen) to reload or remove saved proteins
+7. Click logout to end the session
 
 ### API
 The backend exposes the following endpoints:
 ```
+POST   /api/auth/register        — register a new user
+POST   /api/auth/login           — log in and receive a JWT token
 GET    /api/protein/{pdbId}     — fetch protein metadata (checks cache first)
 GET    /api/favorites           — list all favorited proteins
 POST   /api/favorites/{pdbId}   — add a protein to favorites
 DELETE /api/favorites/{pdbId}   — remove a protein from favorites
 ```
-
+All endpoints except /api/auth/** require a valid JWT token in the Authorization header.

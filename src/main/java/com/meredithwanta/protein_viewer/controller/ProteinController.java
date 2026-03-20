@@ -2,8 +2,11 @@ package com.meredithwanta.protein_viewer.controller;
 
 import com.meredithwanta.protein_viewer.model.Favorite;
 import com.meredithwanta.protein_viewer.model.Protein;
+import com.meredithwanta.protein_viewer.model.User;
 import com.meredithwanta.protein_viewer.repository.FavoriteRepository;
 import com.meredithwanta.protein_viewer.repository.ProteinRepository;
+import com.meredithwanta.protein_viewer.repository.UserRepository;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
@@ -21,16 +24,20 @@ public class ProteinController {
   private final RestTemplate restTemplate = new RestTemplate();
   private final ProteinRepository proteinRepository;
   private final FavoriteRepository favoriteRepository;
+  private final UserRepository userRepository;
 
   /**
    * To construct this ProteinController.
    *
    * @param proteinRepository: to interact with the Protein cache table.
    * @param favoriteRepository: to interact with the Favorite user data table.
+   * @param userRepository: to interact with the User data table.
    */
-  public ProteinController(ProteinRepository proteinRepository, FavoriteRepository favoriteRepository) {
+  public ProteinController(ProteinRepository proteinRepository, FavoriteRepository favoriteRepository,
+                           UserRepository userRepository) {
     this.proteinRepository = proteinRepository;
     this.favoriteRepository = favoriteRepository;
+    this.userRepository = userRepository;
   }
 
   /**
@@ -67,13 +74,14 @@ public class ProteinController {
   }
 
   /**
-   * Returns all Proteins in the Favorite user data table.
+   * Returns all Proteins in the Favorite user data table for the current User.
    *
-   * @return a list of all stored Favorite proteins.
+   * @return a list of all stored Favorite proteins for the current User.
    */
   @GetMapping("/favorites")
   public List<Favorite> getFavorites() {
-    return favoriteRepository.findAll();
+    User user = getCurrentUser();
+    return favoriteRepository.findByUserUsername(user.getUsername());
   }
 
   /**
@@ -87,10 +95,11 @@ public class ProteinController {
   @PostMapping("/favorites/{pdbId}")
   public Favorite addFavorite(@PathVariable String pdbId) {
     String id = pdbId.toUpperCase();
+    User user = getCurrentUser();
     Protein protein = proteinRepository.findById(id)
         .orElseThrow(() -> new RuntimeException("Protein not found in cache"));
 
-    return favoriteRepository.save(new Favorite(protein));
+    return favoriteRepository.save(new Favorite(protein, user));
   }
 
   /**
@@ -101,7 +110,18 @@ public class ProteinController {
   @DeleteMapping("/favorites/{pdbId}")
   public void deleteFavorite(@PathVariable String pdbId) {
     String id = pdbId.toUpperCase();
-    favoriteRepository.findByProteinPdbId(id)
+    User user = getCurrentUser();
+    favoriteRepository.findByProteinPdbIdAndUserUsername(id, user.getUsername())
         .ifPresent(favoriteRepository::delete);
+  }
+
+  /**
+   * To get the current User.
+   *
+   * @return the current logged-in User.
+   */
+  private User getCurrentUser() {
+    String username = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    return userRepository.findByUsername(username).orElseThrow(() -> new RuntimeException("User not found"));
   }
 }

@@ -20,6 +20,10 @@ public class Favorite {
   @JoinColumn(name = "pdb_id")
   private Protein protein;
 
+  @ManyToOne //many users can have the same Favorite
+  @JoinColumn(name = "user_id", nullable = false)
+  private User user;
+
   @Column(name = "saved_at") //@Column maps field to the database column in both directions
   private LocalDateTime savedAt;
 
@@ -32,9 +36,11 @@ public class Favorite {
    * To construct a Favorite Protein
    *
    * @param protein: the RCSB protein that has been favorited.
+   * @param user: the User who is favoriting this Protein.
    */
-  public Favorite(Protein protein) {
+  public Favorite(Protein protein, User user) {
     this.protein = protein;
+    this.user = user;
     this.savedAt = LocalDateTime.now();
   }
 
@@ -54,6 +60,15 @@ public class Favorite {
    */
   public Protein getProtein() {
     return protein;
+  }
+
+  /**
+   * Returns the User who favorited this Favorite.
+   *
+   * @return the User who favorited this Favorite.
+   */
+  public User getUser() {
+    return user;
   }
 
   /**
