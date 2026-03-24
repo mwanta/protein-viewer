@@ -2,6 +2,8 @@ package com.meredithwanta.protein_viewer.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * Entity class:
@@ -10,6 +12,8 @@ import java.time.LocalDateTime;
  */
 @Entity
 @Table(name = "favorites")
+@Data
+@NoArgsConstructor
 public class Favorite {
 
   @Id //each favorite has its own id (separate from ManyToOne relationship)
@@ -28,11 +32,6 @@ public class Favorite {
   private LocalDateTime savedAt;
 
   /**
-   * Basic constructor.
-   */
-  public Favorite() {}
-
-  /**
    * To construct a Favorite Protein
    *
    * @param protein: the RCSB protein that has been favorited.
@@ -42,41 +41,5 @@ public class Favorite {
     this.protein = protein;
     this.user = user;
     this.savedAt = LocalDateTime.now();
-  }
-
-  /**
-   * Returns the database ID of this Favorite.
-   *
-   * @return the database ID of this Favorite.
-   */
-  public Long getId() {
-    return id;
-  }
-
-  /**
-   * Returns the Favorite Protein.
-   *
-   * @return the Favorite Protein.
-   */
-  public Protein getProtein() {
-    return protein;
-  }
-
-  /**
-   * Returns the User who favorited this Favorite.
-   *
-   * @return the User who favorited this Favorite.
-   */
-  public User getUser() {
-    return user;
-  }
-
-  /**
-   * Returns the date when this Favorite Protein was saved.
-   *
-   * @return the date/time when this Favorite Protein was saved.
-   */
-  public LocalDateTime getSavedAt() {
-    return savedAt;
   }
 }

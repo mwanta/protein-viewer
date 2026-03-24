@@ -84,15 +84,15 @@ resource "aws_ecs_task_definition" "main" {
       environment = [
         {
           name  = "SPRING_DATASOURCE_URL"
-          value = "jdbc:postgresql://${aws_db_instance.main.endpoint}/proteinviewer"
+          value = "jdbc:postgresql://db.rcoviawjflafpjcoyxua.supabase.co:5432/postgres"
         },
         {
           name  = "SPRING_DATASOURCE_USERNAME"
-          value = "postgres"
+          value = "postgres.protein_database"
         },
         {
           name  = "SPRING_DATASOURCE_PASSWORD"
-          value = "postgres"
+          value = var.db_password
         }
       ]
       portMappings = [{

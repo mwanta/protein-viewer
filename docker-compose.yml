@@ -1,27 +1,15 @@
 services:
-  db:
-    build:
-      context: ./docker
-      dockerfile: Dockerfile.db
-    environment:
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DATABASE: proteinviewer
-    ports:
-      - "5432:5432"
-
   backend:
     build: .
     ports:
       - "8080:8080"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/proteinviewer
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
     dns:
       - 8.8.8.8
       - 8.8.4.4
-    depends_on:
-      - db
 
   frontend:
     build: ./client

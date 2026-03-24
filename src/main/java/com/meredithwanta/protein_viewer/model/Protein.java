@@ -1,7 +1,9 @@
 package com.meredithwanta.protein_viewer.model;
 
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
+import java.time.Instant;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * Entity class:
@@ -11,59 +13,21 @@ import java.time.LocalDateTime;
  */
 @Entity
 @Table(name = "proteins")
+@Data //Generates getters/setters for all fields + basics (toString, equals, etc)
+@NoArgsConstructor
 public class Protein {
 
   @Id
-  @Column(name = "pdb_id")
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Integer id;
+
+  @Column(unique = true, nullable =false)
   private String pdbId;
 
-  @Column(columnDefinition = "TEXT")
-  private String metadata;
+  private String uniprotID;
+  private String title;
+  private String organism;
+  private Double resolution;
+  private Instant cachedAt;
 
-  @Column(name = "cached_at")
-  private LocalDateTime cachedAt;
-
-  /**
-   * Basic constructor.
-   */
-  public Protein(){}
-
-  /**
-   * To construct a Protein.
-   *
-   * @param pdbID: the RCSB protein ID.
-   * @param metadata: the protein's information.
-   */
-  public Protein(String pdbId, String metadata) {
-    this.pdbId = pdbId;
-    this.metadata = metadata;
-    this.cachedAt = LocalDateTime.now();
-  }
-
-  /**
-   * Returns the PBD ID of this Protein.
-   *
-   * @return the PDB ID of this Protein.
-   */
-  public String getPdbId() {
-    return pdbId;
-  }
-
-  /**
-   * Returns the metadata of this Protein.
-   *
-   * @return the metadata of this Protein.
-   */
-  public String getMetadata() {
-    return metadata;
-  }
-
-  /**
-   * Returns the date when this Protein was cached.
-   *
-   * @return the date/time when this Protein was cached.
-   */
-  public LocalDateTime getCachedAt() {
-    return cachedAt;
-  }
 }
