@@ -35,7 +35,7 @@ public class AnnotationRepository {
   public AnnotationRepository(NamedParameterJdbcTemplate jdbcDelegate, ObjectMapper objectMapper) {
     this.jdbcDelegate = jdbcDelegate;
     this.objectMapper = objectMapper;
-    this.upsertSql = loadSql("sql/annotation-upset.sql");
+    this.upsertSql = loadSql("sql/annotation-upsert.sql");
     this.findSql = loadSql("sql/annotation-find-by-protein.sql");
   }
 
@@ -74,7 +74,7 @@ public class AnnotationRepository {
               toNode(result.getString("uniprot_data")),
               toNode(result.getString("chembl_data")),
               toNode(result.getString("open_targets_data")),
-              result.getTimestamp("cachedAt").toInstant()
+              result.getTimestamp("cached_at").toInstant()
           ));
         });
   }

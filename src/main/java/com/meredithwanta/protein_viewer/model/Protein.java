@@ -2,6 +2,7 @@ package com.meredithwanta.protein_viewer.model;
 
 import jakarta.persistence.*;
 import java.time.Instant;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -15,6 +16,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "proteins")
 @Data //Generates getters/setters for all fields + basics (toString, equals, etc)
 @NoArgsConstructor
+@AllArgsConstructor
 public class Protein {
 
   @Id

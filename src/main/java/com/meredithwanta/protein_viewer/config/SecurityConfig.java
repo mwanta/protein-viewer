@@ -1,5 +1,6 @@
-package com.meredithwanta.protein_viewer.security;
+package com.meredithwanta.protein_viewer.config;
 
+import com.meredithwanta.protein_viewer.security.JwtFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
