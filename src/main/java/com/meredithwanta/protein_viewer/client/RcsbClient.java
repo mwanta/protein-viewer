@@ -29,6 +29,13 @@ public class RcsbClient {
     this.objectMapper = objectMapper;
   }
 
+  /**
+   * Fetches protein metadata from RCSB and maps it to a protein entity.
+   * Also extracts the UniProt ID for compatibility with ChEMBL and Open Targets
+   *
+   * @param pdbId : the RCSB PDB ID
+   * @return a Protein entity with metadata from RCSB.
+   */
   public Protein fetch(String pdbId) {
     String json = restTemplate.getForObject(BASE_URL + "entry/" + pdbId, String.class);
     JsonNode root = objectMapper.readTree(json);
@@ -44,7 +51,7 @@ public class RcsbClient {
         .path("resolution_combined")
         .path(0).asDouble();
 
-    String uniprotId = extractUniprotId(pdbId);
+    String uniprotId = fetchPolymerData(pdbId).uniprotId();
 
     Protein protein = new Protein();
     protein.setPdbId(pdbId);
@@ -58,23 +65,36 @@ public class RcsbClient {
   }
 
   /**
-   * Extract the first polymer entity and extract the first UniProt accession from its
+   * Extract the first polymer entity and extract the first UniProt accession + amino acid sequence from its
    * reference sequence annotations (is not in the main entry point).
    *
+   *
    * @param pdbId : the RSCB PDB ID
-   * @return the UniProt accession ID, or null if not found.
+   * @return the UniProt accession ID, or null if not found and the amino acid sequence
    */
-  private String extractUniprotId(String pdbId) {
+  public PolymerData fetchPolymerData(String pdbId) {
     String url = BASE_URL + "polymer_entity/"  + pdbId + "/1";
     try {
       String json = restTemplate.getForObject(url, String.class);
       JsonNode root = objectMapper.readTree(json);
-      return root.path("rcsb_polymer_entity_container_identifiers")
+      String uniprotId =  root.path("rcsb_polymer_entity_container_identifiers")
           .path("uniprot_ids")
           .path(0)
           .asText(null);
+      String sequence =  root.path("entity_poly")
+          .path("pdbx_seq_one_letter_code_can")
+          .asText(null);
+      return new PolymerData(uniprotId, sequence);
     } catch (Exception e) {
       return null;
     }
   }
+
+  /**
+   * Holds polymer data from the RCSB database.
+   *
+   * @param uniprotId : the UniProt ID
+   * @param sequence : the amino acid sequence
+   */
+  public record PolymerData(String uniprotId, String sequence) {}
 }
