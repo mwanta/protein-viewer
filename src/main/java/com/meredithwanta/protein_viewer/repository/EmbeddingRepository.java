@@ -29,9 +29,9 @@ public class EmbeddingRepository {
    */
   public EmbeddingRepository(NamedParameterJdbcTemplate jdbcDelegate) {
     this.jdbcDelegate = jdbcDelegate;
-    this.saveSql = loadSql("sql/embedding_save.sql");
-    this.existsSql = loadSql("sql/embedding_exists.sql");
-    this.nearestSql = loadSql("sql/embedding_find_nearest.sql");
+    this.saveSql = loadSql("sql/embedding-save.sql");
+    this.existsSql = loadSql("sql/embedding-exists.sql");
+    this.nearestSql = loadSql("sql/embedding-find-nearest.sql");
 
   }
 
