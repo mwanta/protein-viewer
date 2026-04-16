@@ -22,9 +22,9 @@ public class ProteinEmbedding {
   @JoinColumn(name = "protein_id", nullable = false)
   private Protein protein;
 
-  @Column(columnDefinition = "vector(1280)")
+  @Column(columnDefinition = "vector(320)")
   @JdbcTypeCode(SqlTypes.VECTOR)
-  @Array(length = 1280)
+  @Array(length = 320)
   private float[] embeddingVector;
 
   private String modelVersion;

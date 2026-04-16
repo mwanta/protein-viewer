@@ -95,7 +95,7 @@ function App() {
   if (!token) {
     return (
       <div>
-        <h1>Protein Structure Viewer</h1>
+        <h1>Protein Dashboard</h1>
         <h2>{authMode === "login" ? "Login" : "Register"}</h2>
         <input
           value={authUsername}
@@ -123,7 +123,7 @@ function App() {
 
   return (
     <div>
-      <h1>Protein Structure Viewer</h1>
+      <h1>Protein Dashboard</h1>
       <button onClick={() => { setToken(null), setProtein(null), setFavorites([]) }}>
       Logout
       </button>

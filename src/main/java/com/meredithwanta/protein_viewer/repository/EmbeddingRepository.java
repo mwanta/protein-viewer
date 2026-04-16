@@ -46,7 +46,7 @@ public class EmbeddingRepository {
   public void save(Integer proteinId, float[] embeddingVector, String modelVersion) {
     jdbcDelegate.update(saveSql, new MapSqlParameterSource()
         .addValue("proteinId", proteinId)
-        .addValue("embeddingVector", embeddingVector)
+        .addValue("embedding", toVectorString(embeddingVector))
         .addValue("modelVersion", modelVersion));
   }
 

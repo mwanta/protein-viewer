@@ -1,7 +1,7 @@
 package com.meredithwanta.protein_viewer.service;
 
 import com.meredithwanta.protein_viewer.client.ChemblClient;
-import com.meredithwanta.protein_viewer.client.HuggingFaceClient;
+import com.meredithwanta.protein_viewer.client.EmbeddingClient;
 import com.meredithwanta.protein_viewer.client.OpenTargetsClient;
 import com.meredithwanta.protein_viewer.client.UniProtClient;
 import com.meredithwanta.protein_viewer.model.Protein;
@@ -36,7 +36,7 @@ public class ProteinService {
   private final ChemblClient chemblClient;
   private final OpenTargetsClient openTargetsClient;
   private final UniProtClient uniProtClient;
-  private final HuggingFaceClient huggingFaceClient;
+  private final EmbeddingClient embeddingClient;
   private final ProteinRepository proteinRepository;
   private final AnnotationRepository annotationRepository;
   private final EmbeddingRepository embeddingRepository;
@@ -58,6 +58,7 @@ public class ProteinService {
     //Pull from RCSB first to get UniProt ID
     Protein protein = rcsbClient.fetch(pdbId);
     String uniprotId = protein.getUniprotID();
+    String ensemblId = uniProtClient.fetchEnsemblId(uniprotId);
 
     //Fan out to UniProt, ChEMBL, and Open Targets in parallel
     CompletableFuture<JsonNode> uniprotFuture =
@@ -65,11 +66,16 @@ public class ProteinService {
     CompletableFuture<JsonNode> chemblFuture =
         CompletableFuture.supplyAsync(() -> chemblClient.fetch(uniprotId));
     CompletableFuture<JsonNode> openTargetsFuture =
-        CompletableFuture.supplyAsync(() -> openTargetsClient.fetch(uniprotId));
+        CompletableFuture.supplyAsync(() -> openTargetsClient.fetch(ensemblId));
 
     CompletableFuture.allOf(uniprotFuture, chemblFuture, openTargetsFuture).join();
 
     //cache protein metadata
+    Optional<Protein> existing = proteinRepository.findByPdbId(pdbId);
+    if (existing.isPresent()) {
+        protein.setId(existing.get().getId());
+    }
+
     protein = proteinRepository.save(protein);
 
     //save annotations
@@ -119,16 +125,18 @@ public class ProteinService {
    * @param pdbId : the pdb id of the protein
    */
   public void generateEmbeddingAsync(Integer proteinId, String pdbId) {
+    System.out.println("generateEmbeddingAsync called for " + pdbId + " proteinId=" + proteinId);
     if (embeddingRepository.existsByProteinId(proteinId)) return;
     try {
       String sequence = rcsbClient.fetchPolymerData(pdbId).sequence();
       if (sequence == null) return;
 
-      float[] embedding = huggingFaceClient.getEmbedding(sequence);
+      float[] embedding = embeddingClient.getEmbedding(sequence);
       if (embedding == null) return;
       embeddingRepository.save(proteinId, embedding, "esm2_t33_650M_UR50D");
     } catch (Exception e) {
       // embedding failure shouldn't fail main program
+      System.out.println("embedding generation failed: " + e);
     }
   }
 

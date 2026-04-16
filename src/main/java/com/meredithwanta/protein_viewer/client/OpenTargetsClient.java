@@ -33,21 +33,21 @@ public class OpenTargetsClient {
   /**
    * Fetches disease associations for a protein identified by its UniProt ID (accepted by Open Targets).
    *
-   * @param uniprotID: the UniProt accession ID (e.g. P69905)
+   * @param ensemblID: the Ensembl ID
    *
    * @return disease association data as a JsonNode, or null if none found.
    */
-  public JsonNode fetch(String uniprotID) {
-    if (uniprotID == null) {
+  public JsonNode fetch(String ensemblID) {
+    if (ensemblID == null) {
       return null;
     }
 
     try {
       String query = """
       {
-        "query": "{ target(id: \\"%s\\") { id approvedName associatedDiseases(page: {index: 0, size: 20}) { rows { disease { id name } score } } } }"
+        "query": "{ target(ensemblId: \\"%s\\") { id approvedName associatedDiseases(page: {index: 0, size: 20}) { rows { disease { id name } score } } } }"
       }
-      """.formatted(uniprotID);
+      """.formatted(ensemblID);
 
       HttpHeaders headers = new HttpHeaders();
       headers.set("Content-Type", "application/json");
@@ -57,6 +57,7 @@ public class OpenTargetsClient {
       String response = restTemplate.postForObject(BASE_URL, entity, String.class);
       return objectMapper.readTree(response);
     } catch (Exception e) {
+      System.out.println("open targets call failed: " + e);
       return null;
     }
   }

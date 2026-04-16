@@ -40,16 +40,14 @@ public class RcsbClient {
     String json = restTemplate.getForObject(BASE_URL + "entry/" + pdbId, String.class);
     JsonNode root = objectMapper.readTree(json);
 
-    String title = root.path("struct").path("title").asText(null);
+    String title = root.path("struct").path("title").asString(null);
 
-    String organism = root.path("rcsb_entry_info")
-        .path("tax_id_list")
-        .path(0)
-        .path("scientific_name").asText(null);
+    String organism = fetchPolymerData(pdbId).organism();
 
-    Double resolution = root.path("rcsb_entry_info")
+    JsonNode resolutionNode = root.path("rcsb_entry_info")
         .path("resolution_combined")
-        .path(0).asDouble();
+        .path(0);
+    Double resolution = resolutionNode.isMissingNode() ? null : resolutionNode.asDouble();
 
     String uniprotId = fetchPolymerData(pdbId).uniprotId();
 
@@ -80,13 +78,18 @@ public class RcsbClient {
       String uniprotId =  root.path("rcsb_polymer_entity_container_identifiers")
           .path("uniprot_ids")
           .path(0)
-          .asText(null);
+          .asString(null);
       String sequence =  root.path("entity_poly")
           .path("pdbx_seq_one_letter_code_can")
-          .asText(null);
-      return new PolymerData(uniprotId, sequence);
+          .asString(null);
+      String organism = root.path("rcsb_entity_source_organism")
+          .path(0)
+          .path("scientific_name")
+          .asString(null);
+      return new PolymerData(uniprotId, sequence, organism);
     } catch (Exception e) {
-      return null;
+      System.out.println("fetchPolymerData failed: " + e.getMessage());
+      return new PolymerData(null, null, null);
     }
   }
 
@@ -95,6 +98,7 @@ public class RcsbClient {
    *
    * @param uniprotId : the UniProt ID
    * @param sequence : the amino acid sequence
+   * @param organism : the source organism of the protein
    */
-  public record PolymerData(String uniprotId, String sequence) {}
+  public record PolymerData(String uniprotId, String sequence, String organism) {}
 }

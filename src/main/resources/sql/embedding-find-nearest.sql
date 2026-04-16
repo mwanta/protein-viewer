@@ -16,9 +16,9 @@ JOIN proteins p ON p.id = pe.protein_id
 CROSS JOIN (
     SELECT embedding
     FROM protein_embeddings
-    WHERE protein_id = :proteinID
+    WHERE protein_id = :proteinId
 ) query
-WHERE pe.protein_id != :proteinID
+WHERE pe.protein_id != :proteinId
 
 -- cosine distance operator (lower number = more similar -> 0 = vectors are identical)
 ORDER BY pe.embedding <=> query.embedding

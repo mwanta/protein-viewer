@@ -7,11 +7,16 @@ services:
       SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
       SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
       SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
-      HUGGINGFACE_API_KEY: ${HUGGINGFACE_API_KEY}
-
     dns:
       - 8.8.8.8
       - 8.8.4.4
+    depends_on:
+      - embeddings
+
+  embeddings:
+    build: ./embeddings
+    ports:
+      - "8000:8000"
 
   frontend:
     build: ./client

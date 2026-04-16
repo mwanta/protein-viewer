@@ -1,6 +1,5 @@
 package com.meredithwanta.protein_viewer.client;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
@@ -14,41 +13,41 @@ import tools.jackson.databind.ObjectMapper;
  * Used for protein similarity searches.
  */
 @Service
-public class HuggingFaceClient {
+public class EmbeddingClient {
 
-  private static final String MODEL_URL =
-      "https://api-inference.huggingface.co/models/facebook/esm2_t33_650M_UR50D";
+  private static final String MODEL_URL = "http://embeddings:8000/embed";
 
   private final RestTemplate restTemplate;
   private final ObjectMapper objectMapper;
 
-  @Value("${huggingface.api.key}")
-  private String apiKey;
-
-  public HuggingFaceClient(RestTemplate restTemplate, ObjectMapper objectMapper) {
+  public EmbeddingClient(RestTemplate restTemplate, ObjectMapper objectMapper) {
     this.restTemplate = restTemplate;
     this.objectMapper = objectMapper;
   }
 
   public float[] getEmbedding(String sequence) {
     if (sequence == null || sequence.isBlank()) return null;
-
     try {
       HttpHeaders headers = new HttpHeaders();
-      headers.set("Authorization", "Bearer " + apiKey);
       headers.set("Content-Type", "application/json");
 
       String body = objectMapper.writeValueAsString(
-          objectMapper.createObjectNode().put("inputs", sequence)
+          objectMapper.createObjectNode().put("sequence", sequence)
       );
 
       HttpEntity<String> request = new HttpEntity<>(body, headers);
-      String response = restTemplate.postForObject(MODEL_URL, request, String.class);
-      JsonNode root = objectMapper.readTree(response);
+      JsonNode root = objectMapper.readTree(
+          restTemplate.postForObject(MODEL_URL, request, String.class)
+      );
 
-      //ESM-2 returns shape [1, sequence_length, 1280]
-      return averagePool(root.path(0));
+      JsonNode embeddingNode = root.path("embedding");
+      float[] embedding = new float[embeddingNode.size()];
+      for (int i = 0; i < embeddingNode.size(); i++) {
+        embedding[i] = (float) embeddingNode.path(i).asDouble();
+      }
+      return embedding;
     } catch (Exception e) {
+      System.out.println("Embedding service failed: " + e.getMessage());
       return null;
     }
   }

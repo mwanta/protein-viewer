@@ -9,28 +9,39 @@ function ProteinDetail({ annotation, similarProteins, pdbId, authFetch, onLoadPr
   const [similar, setSimilar] = useState(similarProteins ?? [])
   const [loadingSimilar, setLoadingSimilar] = useState(false)
 
-  useEffect(() => {
-    if (activeTab !== "similar" || similar.length > 0) return
+    useEffect(() => {
+        if (activeTab !== "similar" || similar.length > 0) return
 
-    setLoadingSimilar(true)
-    const poll = async () => {
-      try {
-        const res = await authFetch(`/api/protein/${pdbId}/similar`)
-        const data = await res.json()
-        if (data.length > 0) {
-          setSimilar(data)
-          setLoadingSimilar(false)
+        setLoadingSimilar(true)
+        let attempts = 0
+        const maxAttempts = 10
+
+        const poll = async () => {
+            attempts++
+            if (attempts >= maxAttempts) {
+                setLoadingSimilar(false)
+                clearInterval(interval)
+                return
+            }
+            try {
+                const res = await authFetch(`/api/protein/${pdbId}/similar`)
+                const data = await res.json()
+                if (data.length > 0) {
+                    setSimilar(data)
+                    setLoadingSimilar(false)
+                    clearInterval(interval)
+                }
+            } catch (err) {
+                console.error(err)
+                setLoadingSimilar(false)
+                clearInterval(interval)
+            }
         }
-      } catch (err) {
-        console.error(err)
-        setLoadingSimilar(false)
-      }
-    }
 
-    poll()
-    const interval = setInterval(poll, 5000)
-    return () => clearInterval(interval)
-  }, [activeTab, pdbId])
+        poll()
+        const interval = setInterval(poll, 5000)
+        return () => clearInterval(interval)
+    }, [activeTab, pdbId])
 
   useEffect(() => {
     setSimilar(similarProteins ?? [])
