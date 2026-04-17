@@ -21,7 +21,7 @@ public class Favorite {
   private Long id;
 
   @ManyToOne //many favorites could reference one protein, but it is only favorited once
-  @JoinColumn(name = "pdb_id")
+  @JoinColumn(name = "protein_id", nullable = false)
   private Protein protein;
 
   @ManyToOne //many users can have the same Favorite

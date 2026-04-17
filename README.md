@@ -1,15 +1,43 @@
-# Protein Structure Viewer
+# Protein Dashboard
 
 ## Summary
 
-A full-stack web application for searching and visualizing protein structures from the RCSB Protein Data Bank.
+A full-stack protein research platform for searching and visualizing protein structures from the RCSB Protein Data Bank, enriched with functional annotation, drug interaction, and disease association data from multiple biomedical databases. Includes ML-powered protein similarity search using sequence embeddings.
+
+## Screenshots
+
+### Login
+![Login](screenshots/login.png)
+
+### Home Screen
+![Home](screenshots/home.png)
+
+### 3D Structure
+![3D Structure](screenshots/3d_view.png)
+
+### Function Tab
+![Function Tab](screenshots/function.png)
+
+### Drugs Tab
+![Drugs Tab](screenshots/known_drugs.png)
+
+### Diseases Tab
+![Diseases Tab](screenshots/disease_associations.png)
+
+### Similar Proteins Tab
+![Similar Proteins Tab](screenshots/similar_proteins.png)
 
 ## Features
 - Register and log in with a username and password
 - Search proteins by PDB ID
-- Display protein metadata including name, experimental method, and resolution
+- Display protein metadata including title, organism, and resolution
 - Interactive 3D structure visualization rendered in the browser
-- Cache protein metadata in a PostgreSQL database to reduce redundant API calls
+- Tabbed detail panel with data from four biomedical APIs:
+   - Function: protein function and subcellular location from UniProt
+   - Drugs: known drug compounds and bioactivity data from ChEMBL
+   - Diseases: disease associations and evidence scores from Open Targets
+   - Similar proteins: ML-powered similarity search using ESM-2 sequence embeddings and pgvector cosine similarity
+- Cache protein metadata and annotations in PostgreSQL to reduce redundant API calls
 - Save and manage favorite proteins that persist across sessions tied to individual user accounts. 
 
 ## Tech Stack
@@ -22,33 +50,66 @@ A full-stack web application for searching and visualizing protein structures fr
 - Java 21
 - Spring Boot
 - Spring Data JPA / Hibernate
-- Spring Security
-- JWT for stateless authentication
-- RCSB PDB REST API
+- JdbcTemplate with native SQL (JSONB annotation storage and pgvector similarity queries)
+- Parallel async fan-out architecture using Completable Future
+- Spring Async for non-blocking embedding generation
+
+### External APIs
+- RCSB PDB REST API: protein structure metadata and sequences
+- UniProt REST API: protein function, pathways, and cross-references
+- ChEMBL REST API: known drug compounds and bioactivity data
+- Open Targets GraphQL API: disease associations and evidence scores
+
+### ML/Embeddings
+- ESM-2 (Meta) protein language model running as a Python FastAPI sidecar service
+- pgvector PostgreSQL extension for cosine similarity search over 320-dimensional sequence embeddings
 
 ### Database
-- PostgreSQL
-- Three tables: users, proteins (metadata cache), and favorites (user saved proteins)
+- PostgreSQL (Supabase)
+- Five tables: users, proteins (metadata cache), favorites (user saved proteins), protein_annotations (JSONB), and protein_embeddings (pgvector)
 
 ### Infrastructure & DevOps
 - Docker & Docker Compose
 - AWS ECS/EC2 for container hosting
 - AWS ECR for container image registry
-- AWS RDS (PostgreSQL) for cloud database
 - AWS CloudWatch for logging
 - AWS S3 for Terraform remote state
 - Terraform for infrastructure as code
 - GitHub Actions for CI/CD
 
-### Requirements
-- JDK 17 or 21
+## Architecture
+```
+React frontend → Spring Boot backend → RCSB PDB REST API
+                                     → UniProt REST API
+                                     → ChEMBL REST API
+                                     → Open Targets GraphQL API
+                                     → ESM-2 embedding service (async)
+                                     → PostgreSQL / Supabase
+                                         ├── proteins (JPA)
+                                         ├── users (JPA)
+                                         ├── favorites (JPA)
+                                         ├── protein_annotations (JdbcTemplate / JSONB)
+                                         └── protein_embeddings (JdbcTemplate / pgvector)
+```
+
+
+## Requirements
+- JDK 21
 - Node.js (LTS)
 - Maven
 - Docker Desktop
+- Python 3.11 (embeddings service)
 - AWS CLI
 - Terraform
 
 ## To Run Locally
+
+### Docker Compose
+To run all services (frontend, backend, and embeddings) together with Docker:
+```
+docker compose up --build
+```
+The app will be available at http://localhost
 
 ### Backend
 
@@ -66,15 +127,23 @@ npm run dev
 ```
 The frontend will start on http://localhost:5173
 
-### Docker Compose
-To run all services (frontend, backend, and database) together with Docker:
+### Embeddings
+From the embeddings directory:
 ```
-docker compose up --build
+pip install -r requirements.txt
+uvicorn main:app --host 0.0.0.0 --port 8000
 ```
-The app will be available at http://localhost
+
+### Environment variables
+Create a .env file in the project root with:
+```
+SPRING_DATASOURCE_URL=jdbc:postgresql://<host>/<db>
+SPRING_DATASOURCE_USERNAME=<username>
+SPRING_DATASOURCE_PASSWORD=<password>
+```
 
 ## Cloud Deployment
-Infrastructure is managed with Terraform and deployed to AWS ECS/EC2 with an RDS PostgreSQL database.
+Infrastructure is managed with Terraform and deployed to AWS ECS/EC2.
 
 ### Spin Up Infrastructure
 ```
@@ -85,7 +154,7 @@ terraform apply
 
 ### Tear Down Infrastructure
 ```
-terraform destory
+terraform destroy
 ```
 
 CI/CD is managed by GitHub Actions, a non-trivial push to main automatically   
@@ -95,21 +164,24 @@ The workflow can also be triggered manually from the Actions tab in GitHub witho
 
 ## Usage
 1. Register a new account or log in with existing credentials
-2. Enter a PDB ID in the search box (e.g. 4HHB, 1BNA, 3PTB)
+2. Enter a PDB ID in the search box (e.g. 3ERT, 2OCJ, 1IEP)
 3. Click Search or press Enter
 4. View the protein metadata and interact with the 3D structure
-5. Click Add to Favorites to save the protein for later
-6. Use the Favorites list (at the bottom of the screen) to reload or remove saved proteins
-7. Click logout to end the session
+5. Browse the Function, Drugs, Diseases, and Similar tabs for enriched data
+6. Open the Similar tab to trigger ML-powered similarity search; results populate asynchronously as embeddings generate
+7. Click Add to Favorites to save the protein for later
+8. Use the Favorites list (at the bottom of the screen) to reload or remove saved proteins
+9. Click logout to end the session
 
 ### API
 The backend exposes the following endpoints:
 ```
-POST   /api/auth/register        — register a new user
-POST   /api/auth/login           — log in and receive a JWT token
-GET    /api/protein/{pdbId}     — fetch protein metadata (checks cache first)
-GET    /api/favorites           — list all favorited proteins
-POST   /api/favorites/{pdbId}   — add a protein to favorites
-DELETE /api/favorites/{pdbId}   — remove a protein from favorites
+POST   /api/auth/register          — register a new user
+POST   /api/auth/login             — log in and receive a JWT token
+GET    /api/protein/{pdbId}        — fetch full protein detail (structure, annotations, similar proteins)
+GET    /api/protein/{pdbId}/similar — fetch ML-powered similar proteins by embedding cosine similarity
+GET    /api/favorites              — list all favorited proteins for the current user
+POST   /api/favorites/{pdbId}      — add a protein to favorites
+DELETE /api/favorites/{pdbId}      — remove a protein from favorites
 ```
 All endpoints except /api/auth/** require a valid JWT token in the Authorization header.

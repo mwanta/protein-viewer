@@ -98,7 +98,7 @@ public class ProteinController {
   public Favorite addFavorite(@PathVariable String pdbId) {
     String id = pdbId.toUpperCase();
     User user = getCurrentUser();
-    Protein protein = proteinRepository.findById(id)
+    Protein protein = proteinRepository.findByPdbId(id)
         .orElseThrow(() -> new RuntimeException("Protein not found in cache"));
 
     return favoriteRepository.save(new Favorite(protein, user));
