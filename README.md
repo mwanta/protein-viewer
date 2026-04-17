@@ -79,17 +79,17 @@ A full-stack protein research platform for searching and visualizing protein str
 
 ## Architecture
 ```
-React frontend → Spring Boot backend → RCSB PDB REST API
-                                     → UniProt REST API
-                                     → ChEMBL REST API
-                                     → Open Targets GraphQL API
-                                     → ESM-2 embedding service (async)
-                                     → PostgreSQL / Supabase
-                                         ├── proteins (JPA)
-                                         ├── users (JPA)
-                                         ├── favorites (JPA)
-                                         ├── protein_annotations (JdbcTemplate / JSONB)
-                                         └── protein_embeddings (JdbcTemplate / pgvector)
+React frontend → Nginx reverse proxy → Spring Boot backend → RCSB PDB REST API
+                                                           → UniProt REST API
+                                                           → ChEMBL REST API
+                                                           → Open Targets GraphQL API
+                                                           → ESM-2 embedding service (async)
+                                                           → PostgreSQL / Supabase
+                                                               ├── proteins (JPA)
+                                                               ├── users (JPA)
+                                                               ├── favorites (JPA)
+                                                               ├── protein_annotations (JdbcTemplate / JSONB)
+                                                               └── protein_embeddings (JdbcTemplate / pgvector)
 ```
 
 
